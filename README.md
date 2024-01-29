@@ -602,6 +602,7 @@ MathJax 是一个开源的 JavaScript 显示引擎，用于在网页上显示数
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
   ```
 - 这行代码使用了 Cloudflare 的 CDN 来加载 MathJax，并指定了一个配置文件。
+- 当然，在国内的话需要用国内的其他cdn来获取，因为国内的网络对于国外的cdn的访问速度很慢，可以使用[这个网站](https://www.bootcdn.cn/mathjax/)来获取国内的cdn。
 
 #### b. 在网页中使用
 - 在网页的任何地方使用 MathJax 支持的数学标记来编写数学公式。
