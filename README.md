@@ -64,7 +64,7 @@ A webpage based matrix calculator.
 
 ## 学习路线
 
-1. [Vue.js](https://cn.vuejs.org/v2/guide/)
+### 1. [Vue.js](https://cn.vuejs.org/v2/guide/)
 ### vue的介绍
 Vue.js（读音 /vjuː/, 类似于 view） 是一套构建用户界面的渐进式框架。Vue 只关注视图层，采用自底向上增量开发的设计。
 
@@ -489,7 +489,8 @@ Vuex 是专为 Vue.js 应用程序开发的状态管理模式和库。
 
 ### 总结
 Vuex 的基本使用涉及到管理应用的中央状态、实施同步和异步的变更操作。进阶使用则包括利用 getters 提高性能，通过 actions 处理异步逻辑，以及模块化管理大型应用的状态。虽然 Vuex 提供了强大的工具集，但它也增加了应用的复杂性。因此，对于简单的应用，仅使用 Vue 的本地状态管理可能更合适。而对于需要处理多个组件共享状态的复杂应用，Vuex 就显得非常有用了。
-3. [Bootstrap Vue](https://bootstrap-vue.org/docs)
+
+### 3. [Bootstrap Vue](https://bootstrap-vue.org/docs)
 
 ### [Bootstrap Vue 官方文档](https://bootstrap-vue.org/docs)
 
@@ -583,8 +584,9 @@ Bootstrap Vue 提供了一系列的组件，用于快速开发。
 
 ### 总结
 
-Bootstrap Vue 是一个功能丰富的库，将 Bootstrap 的样式和响应式布局引入 Vue 应用。通过使用它提供的各种组件和布局工具，即使是初学者也能快速构建出美观且响应式的界面。建议在开始使用前阅读官方文档，以更
-4. [MathJax](https://www.mathjax.org/)
+Bootstrap Vue 是一个功能丰富的库，将 Bootstrap 的样式和响应式布局引入 Vue 应用。通过使用它提供的各种组件和布局工具，即使是初学者也能快速构建出美观且响应式的界面。建议在开始使用前阅读官方文档，以更加深入地理解 Bootstrap Vue 的使用方法。
+
+### 4. [MathJax](https://www.mathjax.org/)
 
 ### [MathJax 官方网站](https://www.mathjax.org/)
 
@@ -640,7 +642,8 @@ MathJax 提供了多种配置选项，允许你自定义公式的显示方式。
 ### 总结
 
 MathJax 是在网页上显示数学公式的强大工具，通过 CDN 的方式可以很容易地在你的网站中使用它。通过简单的配置，你可以定制 MathJax 的行为，以适应你的特定需求。对于初学者来说，理解基本的使用方法和配置选项是开始使用 MathJax 的重要步骤。
-5. [git](https://github.com/git-guides/install-git)
+
+### 5. [git](https://github.com/git-guides/install-git)
 
 ### [Git 官方网站](https://github.com/git-guides/install-git)
 
