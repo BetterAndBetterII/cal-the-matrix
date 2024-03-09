@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性代数计算器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container-fluid h-100">
+        <h1 class="my-4 banner">线性代数计算器</h1>
+        <div class="row h-100">
+            <div class="col-md-3 col-lg-2 sidebar bg-light">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" id="option1">矩阵乘法</a>
+                    </li>
+                    <!-- 其他选项 -->
+                </ul>
+            </div>
+            <div class="col-md-9 col-lg-10 main-content">
+                <div id="content1" class="content show">
+                    <h2>矩阵乘法</h2>
+                    <p>请输入两个矩阵进行乘法计算。</p>
+                    <div style="display: flex; flex-direction: row; margin: 10px 0 10px 0">
+                        <div class="input-matrix-container" id="matrix1-container">
+                            <textarea id="matrix1" class="input-matrix"></textarea>
+                            <img id="matrix1-preview" class="matrix-preview" style="display:none;">
+                            <div class="close-button" id="close-matrix1" style="display: none;"></div>
+                        </div>
+                        <div class="input-matrix-container" id="matrix2-container">
+                            <textarea id="matrix2" class="input-matrix"></textarea>
+                            <img id="matrix2-preview" class="matrix-preview" style="display:none;">
+                            <div class="close-button" id="close-matrix2" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <!-- <button onclick="calculateMatrix()" class="btn btn-primary">计算</button> -->
+                    <div id="matrix-multiplication" class="mt-3"></div>
+                    <div id="result"></div>
+                </div>
+                <!-- 其他内容区域 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>  <!-- crypto-js -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.5.0/axios.min.js"></script>  <!-- axios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js" integrity="sha512-D/RyeW6S1nM+OJUBeS/w8U1CVwAaR3EMBRzaacbYkjMqgF+4rcvYR50LC+6egba1WHJSmf6Sua2Zj5V+Cg85lQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>  <!-- mathjs -->
+    <link rel="dns-prefetch" href="http://cdn.mathjax.org">
+    <!-- <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/latest.min.js" integrity="sha512-QQm/4OlaCH+aZ5vZH9j1fDm1VP4JCqcYPvQgjEvDNm+jEA5rScyBKAo7IbonniacCAX3AHoCZWaJLIQ2MARNxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+    <script type="module" src="./simpletex.js"></script>
+    <script type="module" src="./matrix.js"></script>
+    
+    <script>
+
+        var matrix1 = null;
+        var matrix2 = null;
+
+        // 这个函数会在用户粘贴图像时调用
+        function handleImagePaste(imageFile, targetId) {
+            console.log('handleImagePaste:', targetId);
+            // 处理图像的代码...
+            // 使用 FileReader 读取图片内容
+            console.log('检测到粘贴的图像文件:', imageFile);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(targetId + '-preview');
+                const textarea = document.getElementById(targetId);
+                if (targetId === 'matrix1') {
+                    matrix1 = null;
+                } else if (targetId === 'matrix2') {
+                    matrix2 = null;
+                }
+                // 显示图片预览
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                // 隐藏并禁用 textarea
+                textarea.style.display = 'none';
+                textarea.disabled = true;
+            };
+            reader.readAsDataURL(imageFile);
+            ocr(imageFile).then((result) => {
+                // result -> latex string
+                console.log('识别结果:', result);
+                matrix = Matrix.parseFromLatex(result);
+                console.log('解析结果:', matrix);
+                // 如果矩阵1已存在,matrix作为矩阵2,否则则为矩阵1
+                if (matrix1) {
+                    matrix2 = matrix;
+                } else {
+                    matrix1 = matrix;
+                }
+                calculateMatrix();
+            })
+
+        }
+
+        window.addEventListener('paste', function(event) {
+            // 获取剪贴板中的所有项目
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                // 检查是否为图像
+                if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
+                    if (!matrix1) {
+                        var targetId = 'matrix1';
+                    } else if (!matrix2) {
+                        var targetId = 'matrix2';
+                    } else {
+                        console.log('矩阵1和矩阵2都已存在');
+                        return;
+                    }
+                    // 调用函数处理图像
+                    handleImagePaste(item.getAsFile(), targetId);
+                }
+            }
+        });
+
+        document.querySelectorAll('.nav-link').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const contentId = this.id.replace('option', 'content');
+
+                document.querySelectorAll('.content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(contentId).style.display = 'block';
+
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelector('#matrix1-container').addEventListener('mouseenter', function(){
+            document.getElementById('close-matrix1').style.display = 'block';
+        });
+
+        document.querySelector('#matrix1-container').addEventListener('mouseleave', function(){
+            matrix1 = null;
+            document.getElementById('close-matrix1').style.display = 'none';
+        });
+
+        document.querySelector('#close-matrix1').addEventListener('click', function(){
+            input = document.getElementById('matrix1')
+            img = document.getElementById('matrix1-preview')
+            if (input.value) {
+                input.value = ''
+            }
+            if (img.src) {
+                img.src = ''
+            }
+            img.style.display = 'none'
+            input.style.display = 'block'
+            input.disabled = false
+        });
+
+        document.querySelector('#matrix2-container').addEventListener('mouseenter', function(){
+            document.getElementById('close-matrix2').style.display = 'block';
+            
+        });
+
+        document.querySelector('#matrix2-container').addEventListener('mouseleave', function(){
+            matrix2 = null;
+            document.getElementById('close-matrix2').style.display = 'none';
+        });
+
+        document.querySelector('#close-matrix2').addEventListener('click', function(){
+            input = document.getElementById('matrix2')
+            img = document.getElementById('matrix2-preview')
+            if (input.value) {
+                input.value = ''
+            }
+            if (img.src) {
+                img.src = ''
+            }
+            img.style.display = 'none'
+            input.style.display = 'block'
+            input.disabled = false
+        });
+
+        function renderMatrixMultiplication(matrix1, matrix2) {
+            var latexString = '';
+            if (!matrix1 || !matrix2) {
+                if (!matrix1 && matrix2) {
+                    console.log('矩阵1为空');
+                    latexString = `$$\\text{矩阵1为空} \\times ${matrix2.getLatexString()}$$`;
+                }
+                else if (matrix1 && !matrix2) {
+                    console.log('矩阵2为空');
+                    latexString = `$$${matrix1.getLatexString()} \\times \\text{矩阵2为空}$$`;
+                }
+                else if (!matrix1 && !matrix2) {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} \\times \\text{矩阵2为空}$$`;
+                }
+                else {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} \\times \\text{矩阵2为空}$$`;
+                }
+            }
+            else{
+                result_matrix = matrix1.multiply(matrix2);
+                console.log('result_matrix:', result_matrix);
+                // 构建矩阵乘法的完整LaTeX表示
+                latexString = `$$ ${matrix1.getLatexString()} \\times ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('matrix-multiplication');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+          }
+
+        function calculateMatrix() {
+            if (!matrix1 || !matrix2) {
+                console.log('矩阵1或矩阵2为空');
+                renderMatrixMultiplication(matrix1, matrix2);
+                return;
+            }
+            renderMatrixMultiplication(matrix1, matrix2);
+            
+        }
+    </script>
+</body>
+</html>
