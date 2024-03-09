@@ -1,0 +1,96 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden; /* 隐藏滚动条并去除滚动 */
+}
+.sidebar {
+    min-height: 100%;
+    border-right: 1px solid #ddd;
+    overflow-y: auto; /* 侧边栏内部滚动 */
+}
+.main-content {
+    padding: 20px;
+    height: calc(100vh - 40px); /* 减去padding的高度 */
+    overflow: hidden; /* 隐藏不必要的滚动 */
+}
+.input-matrix {
+    border: 2px solid #ddd; /* 边框颜色 */
+    padding: 20px;
+    margin-bottom: 20px; /* 与下一个元素的间距 */
+    resize: none; /* 去除可调整大小的功能 */
+}
+.input-matrix:focus {
+    border-color: #ff0000; /* 聚焦时的边框颜色 */
+    box-shadow: none; /* 移除Bootstrap的阴影 */
+}
+/* 适当调整以符合图片的布局 */
+#matrix1, #matrix2 {
+    width: 100%; /* 输入框宽度 */
+    min-height: 100%; /* 输入框最小高度 */
+    min-width: 120px; /* 输入框最小宽度 */
+    margin: 0 10px 0 10px; /* 与其他输入框的间距 */
+    padding: 5px;
+    border-radius: 5px;
+    height: auto;
+    z-index: 1;
+}
+.content {
+    display: none;
+}
+.show {
+    display: block;
+}
+.banner {
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+.input-matrix-container {
+    position: relative;
+    width: 100%; /* 或者具体宽度 */
+    margin: 0 5px; /* 根据需要调整 */
+    max-height: 200px; /* 最大高度 */
+    position: relative;
+}
+
+.matrix-preview {
+    max-height: 100%; /* 图片高度不超过父容器 */
+    max-width: 100%; /* 图片宽度不超过父容器 */
+    object-fit: cover; /* 图片缩放 */
+    margin: 0 auto; /* 图片居中 */
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-button::before,
+.close-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 9px;
+  height: 20px;
+  width: 2px;
+  background-color: #ddd;
+}
+
+.close-button::before {
+    transform: rotate(45deg);
+}
+  
+.close-button::after {
+    transform: rotate(-45deg);
+}
+
+.input-matrix-container img {
+    margin: 0 auto;
+    border: #ddd 2px solid;
+    border-radius: 5px;
+}
