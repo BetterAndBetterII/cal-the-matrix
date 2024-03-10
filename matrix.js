@@ -47,39 +47,47 @@ const generateSymmetricMatrix = (size) => {
     return matrix;
 }
 
-const matrixSize = 4;
-// const matrix = generateMatrix(matrixSize);
-// const symmetricMatrix = generateSymmetricMatrix(matrixSize);
-const matrix = [
-    [25, 15, -5],
-    [15, 18,  0],
-    [-5,  0, 11]
-  ];
+function elementToTex(element) {
+  console.log(element);
+  if (typeof element === 'object') {
+      // fraction
+      // if it can be parsed as a number
+      if (element.n === 0) {
+          return '0';
+      } 
+      if (element.n === element.d) {
+          return element.s;
+      }
+      if (element.n % element.d === 0) {
+          return ((element.n / element.d) * element.s);
+      }
+      if (element.d === 1) {
+          return (element.n * element.s);
+      }
+      var res = '\\frac{' + (element.n * element.s) + '}{' + element.d + '}';
+      return res;
+  }
+  return element;
+}
 
-// Calculate the inverse of the matrix
-// // LU分解
-// const result = math.lup(matrix);
-// console.log('L matrix:', result.L);
-// console.log('U matrix:', result.U);
-// printMatrix(result.L);
-// printMatrix(result.U);
-
-// // 计算逆矩阵
-// const inverse = math.inv(result.U);
-// console.log('Inverse matrix:', inverse);
-// printMatrix(inverse);
-
-// Cholesky分解
-// const cholesky = math.cholesky(matrix);
-// console.log('Cholesky matrix:', cholesky);
-// printMatrix(cholesky);
-// printMatrix(matrix);
-// const cholesky = choleskyDecomposition(matrix);
-// printMatrix(cholesky);
-// } catch (error) {
-//   console.error('Error calculating the inverse:', error.message);
-// }
-
+function parseElement(element) {
+  // Match LaTeX fractions
+  const fracRegex = /\\frac{([^}]+)}{([^}]+)}/;
+  const match = element.match(fracRegex);
+  if (match) {
+      const numerator = parseFloat(match[1]);
+      const denominator = parseFloat(match[2]);
+      if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+          return math.fraction(numerator, denominator); // Return the fraction as a mathjs fraction
+          // return numerator / denominator; // Return the fraction as a division
+      } else {
+          return element; // Return the original string if parsing fails
+      }
+  } else {
+      const num = parseFloat(element);
+      return isNaN(num) ? element : num; // Parse as a float or return the original string
+  }
+}
 
 class Matrix {
     constructor(matrix) {
@@ -95,51 +103,57 @@ class Matrix {
     }
 
     static parseFromLatex(latexString) {
-        const matrixEnvironments = ['matrix', 'bmatrix', 'pmatrix', 'vmatrix', 'Bmatrix'];
-        let environmentFound = false;
-        let matrixArray = [];
-    
-        matrixEnvironments.forEach(env => {
-            const regex = new RegExp(`\\\\begin{${env}}(.*?)\\\\end{${env}}`, 'gs');
-            const match = latexString.match(regex);
-            if (match) {
-                environmentFound = true;
-                const matrixContent = match[0];
-                // 移除开始和结束环境标签
-                const contentWithoutEnv = matrixContent
-                    .replace(`\\begin{${env}}`, '')
-                    .replace(`\\end{${env}}`, '')
-                    .trim();
-                // 移除行间距命令
-                const cleanedContent = contentWithoutEnv.replace(/\\\\\[\d*\.?\d*em\]/g, '\\\\');
-                // 分割行和列
-                const rows = cleanedContent.split('\\\\').map(row => 
-                    row.trim().split('&').map(element => {
-                        const cleanedElement = element.trim();
-                        const num = parseFloat(cleanedElement);
-                        return isNaN(num) ? cleanedElement : num;
-                    })
-                );
-    
-                if (rows.length > 0 && rows[0].length > 0) {
-                    matrixArray = rows;
-                }
-            }
-        });
-    
-        if (!environmentFound || matrixArray.length === 0) {
-            throw new Error('No valid LaTeX matrix environment found or matrix is empty.');
-        }
-    
-        const isWellFormed = matrixArray.every(row => row.length === matrixArray[0].length);
-        if (!isWellFormed) {
-            throw new Error('The LaTeX matrix is not well-formed.');
-        }
-    
-        return new Matrix(matrixArray);
-    }
+      const matrixEnvironments = ['matrix', 'bmatrix', 'pmatrix', 'vmatrix', 'Bmatrix'];
+      let environmentFound = false;
+      let matrixArray = [];
+
+      matrixEnvironments.forEach(env => {
+          const regex = new RegExp(`\\\\begin{${env}}(.*?)\\\\end{${env}}`, 'gs');
+          const match = latexString.match(regex);
+          if (match) {
+              environmentFound = true;
+              const matrixContent = match[0];
+              const contentWithoutEnv = matrixContent
+                  .replace(`\\begin{${env}}`, '')
+                  .replace(`\\end{${env}}`, '')
+                  .trim();
+              const cleanedContent = contentWithoutEnv.replace(/\\\\\[\d*\.?\d*em\]/g, '\\\\');
+              
+              const rows = cleanedContent.split('\\\\').map(row =>
+                  row.trim().split('&').map(element => {
+                      return parseElement(element.trim());
+                  })
+              );
+
+              if (rows.length > 0 && rows[0].length > 0) {
+                  matrixArray = rows;
+              }
+          }
+      });
+
+      if (!environmentFound || matrixArray.length === 0) {
+          throw new Error('No valid LaTeX matrix environment found or matrix is empty.');
+      }
+
+      const isWellFormed = matrixArray.every(row => row.length === matrixArray[0].length);
+      if (!isWellFormed) {
+          throw new Error('The LaTeX matrix is not well-formed.');
+      }
+
+      return new Matrix(matrixArray); // Make sure you have a Matrix constructor or replace with appropriate handling
+  }
 
     getLatexString() {
+        // if fraction format
+        if (this.matrix.toArray().every(row => row.every(element => typeof element === 'object'))) {
+            // every element is a fraction
+            const rows = this.matrix.toArray();
+            const rowStrings = rows.map(row => row.map(element => elementToTex(element)).join(' & '));
+            const latexRows = rowStrings.join(' \\\\ ');
+            return `\\begin{bmatrix} ${latexRows} \\end{bmatrix}`;
+        }
+
+        // not fraction format
         const rows = this.matrix.toArray();
         const rowStrings = rows.map(row => row.join(' & '));
         const latexRows = rowStrings.join(' \\\\ ');
@@ -149,11 +163,30 @@ class Matrix {
     luDecomposition() {
       try {
         const result = math.lup(this.matrix);
-        var L_matrix = new Matrix(result.L.toArray());
-        var U_matrix = new Matrix(result.U.toArray());
+        var L_matrix = new Matrix(math.fraction(result.L.toArray()));
+        var U_matrix = new Matrix(math.fraction(result.U.toArray()));
         var P_matrix;
-        if (result.P) {
-            P_matrix = new Matrix(result.P.toArray());
+        const matrixSize = this.matrix.toArray().length;
+        console.log('P:', result);
+        if (result.p) {
+            // convert p to elementary matrix
+            var p = [];
+            for (let i = 0; i < matrixSize; i++) {
+                p.push([]);
+            }
+            // 原始矩阵的第一行（索引0）移动到了新矩阵的第三行（P[2]指向索引1）。
+            // 原始矩阵的第二行（索引1）移动到了新矩阵的第一行（P[0]指向索引2）。
+            // 原始矩阵的第三行（索引2）移动到了新矩阵的第二行（P[1]指向索引0）。
+            for (let i = 0; i < result.p.length; i++) {
+                for (let j = 0; j < result.p.length; j++) {
+                    if (result.p[i] === j) {
+                        p[i][j] = 1;
+                    } else {
+                        p[i][j] = 0;
+                    }
+                }
+            }
+            P_matrix = new Matrix(math.fraction(p));
           } else {
             P_matrix = new Matrix(math.eye(matrixSize).toArray());  // Elementary matrix
           }
@@ -165,48 +198,60 @@ class Matrix {
     }
   
     choleskyDecomposition() {
-        console.log('matrix:', this.matrix.toArray()[0].length);
-        if (this.matrix.toArray().length === 0 || this.matrix.toArray().length !== this.matrix.toArray()[0].length) {
-            throw new Error("Matrix must be square.");
-        }
+      let matrixArray = this.matrix.toArray();
+      
+      if (matrixArray.length === 0 || matrixArray.length !== matrixArray[0].length) {
+          throw new Error("Matrix must be square.");
+      }
 
-        const matrix = this.matrix.toArray();
-        
-        let L = [];
-        for (let i = 0; i < matrix.length; i++) {
-            L[i] = new Array(matrix.length).fill(0);
-        }
+      // 判断是否为正定矩阵
+      for (let i = 0; i < matrixArray.length; i++) {
+          for (let j = 0; j < i; j++) {
+              if (matrixArray[i][j] !== matrixArray[j][i]) {
+                  throw new Error("Matrix must be symmetric.");
+              }
+          }
+      }
+      // det > 0
+      if (math.det(this.matrix) <= 0) {
+          throw new Error("Matrix must be positive definite.");
+      }
 
-        try {
-            for (let i = 0; i < matrix.length; i++) {
-                for (let j = 0; j <= i; j++) {
-                    let sum = 0;
-    
-                    if (j === i) { // Diagonal elements
-                        for (let k = 0; k < j; k++) {
-                            sum += L[j][k] * L[j][k];
-                        }
-                        L[j][j] = Math.sqrt(matrix[j][j] - sum);
-                    } else {
-                        for (let k = 0; k < j; k++) {
-                            sum += L[i][k] * L[j][k];
-                        }
-                        L[i][j] = (1 / L[j][j]) * (matrix[i][j] - sum);
-                    }
-                }
-            }
-            console.log('Cholesky matrix:', L);
-            return new Matrix(L);
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
+      const size = matrixArray.length;
+
+      let L = new Array(size);
+      for (let i = 0; i < size; i++) {
+          L[i] = new Array(size).fill(0);
+      }
+
+      for (let i = 0; i < size; i++) {
+          for (let j = 0; j <= i; j++) {
+              let sum = 0;
+
+              if (j === i) { // 对角元素
+                  for (let k = 0; k < j; k++) {
+                      sum += L[j][k] * L[j][k];
+                  }
+                  L[j][j] = Math.sqrt(matrixArray[j][j] - sum);
+              } else {
+                  for (let k = 0; k < j; k++) {
+                      sum += L[i][k] * L[j][k];
+                  }
+                  L[i][j] = (matrixArray[i][j] - sum) / L[j][j];
+              }
+          }
+      }
+
+      console.log('Cholesky matrix:', L);
+      // 根据你的需求返回L
+      return (new Matrix(math.fraction(L))); // 如果你使用mathjs的Matrix类型
+  }
   
     inverse() {
       try {
         const inv = math.inv(this.matrix);
-        console.log('Inverse matrix:', inv);
-        return new Matrix(inv);
+        console.log('Inverse matrix:', math.fraction(inv));
+        return new Matrix(math.fraction(inv));
       } catch (error) {
         console.error('Error calculating the inverse:', error);
         throw new Error(error.message);
@@ -216,7 +261,7 @@ class Matrix {
     multiply(other) {
       try {
         const product = math.multiply(this.matrix, other.matrix);
-        return new Matrix(product);
+        return new Matrix(math.fraction(product));
       } catch (error) {
         console.error('Error multiplying matrices:', error);
         throw new Error(error.message);
@@ -226,7 +271,7 @@ class Matrix {
     add(other) {
       try {
         const sum = math.add(this.matrix, other.matrix);
-        return new Matrix(sum);
+        return new Matrix(math.fraction(sum));
       } catch (error) {
         console.error('Error adding matrices:', error);
         throw new Error(error.message);
@@ -236,7 +281,7 @@ class Matrix {
     subtract(other) {
       try {
         const difference = math.subtract(this.matrix, other.matrix);
-        return new Matrix(difference);
+        return new Matrix(math.fraction(difference));
       } catch (error) {
         console.error('Error subtracting matrices:', error);
         throw new Error(error.message);
@@ -245,6 +290,8 @@ class Matrix {
 }
 
 window.Matrix = Matrix;
+
+const matrixSize = 3;
 
 // Usage
 const matrix1 = generateMatrix(matrixSize);

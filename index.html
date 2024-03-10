@@ -594,8 +594,8 @@
                     l_matrix = result.L;
                     u_matrix = result.U;
                     // 构建矩阵乘法的完整LaTeX表示
-                    if (result.p){
-                        p_matrix = result.p;
+                    if (result.P){
+                        p_matrix = result.P;
                         latexString = `$$${p_matrix.getLatexString()} \\times ${matrix1.getLatexString()} \\ =  ${l_matrix.getLatexString()} \\times ${u_matrix.getLatexString()}$$`;
                     }
                     else{
