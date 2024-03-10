@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性代数计算器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header class="navbar navbar-expand-lg bd-navbar sticky-top" id="header">
+        <nav class="container-xxl bd-gutter flex-wrap flex-lg-nowrap">
+            <h2 class="navbar navbar-expand-lg bd-navbar sticky-top mt-3 mb-3" id="big-title">线性代数计算器</h1>
+        </nav>
+    </header>
+    <div class="container-fluid h-100">
+        <div class="row h-100">
+            <div class="col-md-3 col-lg-2 sidebar bg-light" id="sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" id="option1">矩阵乘法</a>
+                        <a href="#" class="nav-link" id="option2">矩阵加法</a>
+                        <a href="#" class="nav-link" id="option3">矩阵减法</a>
+                        <a href="#" class="nav-link" id="option4">矩阵求逆</a>
+                        <a href="#" class="nav-link" id="option5">LU分解</a>
+                        <a href="#" class="nav-link" id="option6">Cholesky分解</a>
+                    </li>
+                    <!-- 其他选项 -->
+                </ul>
+            </div>
+            <div class="col-md-9 col-lg-10 main-content">
+                <div id="content1" class="content show">
+                    <h2 id="function-title">矩阵乘法</h2>
+                    <p id="function-detail">请粘贴图片或输入二维数组，自动识别矩阵并计算结果。</p>
+                    <div id="warning" class="alert alert-warning" role="alert" style="display: none;"></div>
+                    <div style="display: flex; flex-direction: row; margin: 10px 0 10px 0">
+                        <div class="input-matrix-container" id="matrix1-container">
+                            <textarea id="matrix1" class="input-matrix"></textarea>
+                            <img id="matrix1-preview" class="matrix-preview" style="display:none;">
+                            <div class="close-button" id="close-matrix1" style="display: none;"></div>
+                        </div>
+                        <div class="input-matrix-container" id="matrix2-container">
+                            <textarea id="matrix2" class="input-matrix"></textarea>
+                            <img id="matrix2-preview" class="matrix-preview" style="display:none;">
+                            <div class="close-button" id="close-matrix2" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <!-- <button onclick="calculateMatrix()" class="btn btn-primary">计算</button> -->
+                    <div class="mt-3">识别结果：</div>
+                    <div id="result" class="mt-3"></div>
+                </div>
+                <!-- 其他内容区域 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>  <!-- crypto-js -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.5.0/axios.min.js"></script>  <!-- axios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js" integrity="sha512-D/RyeW6S1nM+OJUBeS/w8U1CVwAaR3EMBRzaacbYkjMqgF+4rcvYR50LC+6egba1WHJSmf6Sua2Zj5V+Cg85lQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>  <!-- mathjs -->
+    <link rel="dns-prefetch" href="http://cdn.mathjax.org">
+    <!-- <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/latest.min.js" integrity="sha512-QQm/4OlaCH+aZ5vZH9j1fDm1VP4JCqcYPvQgjEvDNm+jEA5rScyBKAo7IbonniacCAX3AHoCZWaJLIQ2MARNxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+    <script type="module" src="./simpletex.js"></script>
+    <script type="module" src="./matrix.js"></script>
+    
+    <script>
+
+        var matrix1 = null;
+        var matrix2 = null;
+
+        var matrix1_ori = null;
+        var matrix2_ori = null;
+
+        var inputarea1Focusing = false;
+        var inputarea2Focusing = false;
+
+        var function_name = 'multiply';
+
+        async function show_warning(message) {
+            const warning = document.getElementById('warning');
+            warning.innerHTML = message;
+            warning.style.display = 'block';
+            setTimeout(() => {
+                warning.style.display = 'none';
+            }, 5000);
+        }
+
+        // ori -> matrix
+
+        function saveOri(ori){  // ori -> matrix
+            // determine where to store the matrix
+            var to = null;
+            // matrix1, matrix2
+            if (inputarea1Focusing){
+                to = "matrix1";
+            }else if (inputarea2Focusing){
+                to = "matrix2";
+            } else {    
+                if (!matrix1){
+                    to = "matrix1";
+                }
+                else if (!matrix2){
+                    to = "matrix2";
+                }
+                else{
+                    show_warning('矩阵1和矩阵2都已存在');
+                }
+            }
+
+            if (to == null){
+                return;
+            }
+
+            console.log('保存ori到:', ori, to);
+            if (to == "matrix1"){
+                inputarea1Focusing = false;
+                inputarea2Focusing = true;
+                matrix1_ori = ori;
+                fromOriToMatrix(to);
+            }else if (to == "matrix2"){
+                inputarea1Focusing = true;
+                inputarea2Focusing = false;
+                matrix2_ori = ori;
+                fromOriToMatrix(to);
+            }
+        }
+
+        function fromOriToMatrix(targetId){
+            if (targetId == "matrix1" && matrix1_ori){
+                _fromOriToMatrix(matrix1_ori, "matrix1");
+            }
+            if (targetId == "matrix2" && matrix2_ori){
+                _fromOriToMatrix(matrix2_ori, "matrix2");
+            }
+        }
+
+        function _fromOriToMatrix(ori, targetId){
+            console.log('fromOriToMatrix:', ori, targetId);
+            // 2d-list or image
+            if (ori instanceof String || typeof ori === 'string'){
+                parseFromArray(ori, targetId);
+            }
+            else if (ori instanceof File){
+                parseFromImage(ori, targetId);
+            }
+            else{
+                console.log('不支持的类型');
+            }
+        }
+
+        // 这个函数会在用户粘贴图像时调用
+        function parseFromImage(imageFile, targetId) {
+            console.log('handleImagePaste:', targetId);
+            // 处理图像的代码...
+            // 使用 FileReader 读取图片内容
+            console.log('检测到粘贴的图像文件:', imageFile);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(targetId + '-preview');
+                const textarea = document.getElementById(targetId);
+                // 显示图片预览
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                // 隐藏并禁用 textarea
+                textarea.style.display = 'none';
+                textarea.disabled = true;
+            };
+            reader.readAsDataURL(imageFile);
+            ocr(imageFile).then((result) => {
+                // result -> latex string
+                console.log('识别结果:', result);
+                try{
+                    var matrix = Matrix.parseFromLatex(result);
+                }
+                catch (e){
+                    console.log('解析失败:', e);
+                    show_warning('解析失败，请重试');
+                    return;
+                }
+                console.log('解析结果:', matrix);
+                // 如果矩阵1已存在,matrix作为矩阵2,否则则为矩阵1
+                if (targetId === 'matrix1') {
+                    matrix1 = matrix;
+                } else if (targetId === 'matrix2') {
+                    matrix2 = matrix;
+                }
+                calculateMatrix();
+            })
+        }
+
+        function parseFromArray(str, targetId){
+            // 2d-list
+            console.log('parseFromArray:', str);
+            // split by "," or " "
+            try{
+                const array = parseStringToArray(str);
+                var matrix = new Matrix(array);
+            }
+            catch (e){
+                console.log('解析失败:', e);
+                show_warning('解析失败');
+                return;
+            }
+            console.log('parseFromArray:', matrix);
+            if (targetId === 'matrix1') {
+                matrix1 = matrix;
+            } else if (targetId === 'matrix2') {
+                matrix2 = matrix;
+            }
+            calculateMatrix();
+        }
+
+        function parseStringToArray(str) {
+            // 去除首尾的空白字符和不规则的换行符，统一换行符为\n
+            str = str.trim().replace(/\r\n?/g, '\n');
+        
+            // 分割字符串为行
+            var lines = str.split('\n');
+        
+            // 准备一个数组来存放解析后的矩阵
+            var matrix = [];
+        
+            // 遍历每一行
+            lines.forEach(line => {
+                // 使用正则表达式分割每行中的数字，支持的分隔符包括逗号、空格以及逗号后跟一个或多个空格
+                var elements = line.trim().split(/,|\s+|,\s+/).filter(element => element !== '');
+        
+                // 将分割后的字符串数组转换为数字数组
+                var numberArray = elements.map(element => {
+                    let number = parseFloat(element);
+                    if (isNaN(number)) throw '解析失败：包含非数字元素';
+                    return number;
+                });
+        
+                // 将这行的数字数组添加到矩阵中
+                matrix.push(numberArray);
+            });
+        
+            // 检查矩阵是否每行列数一致
+            const columnCount = matrix[0].length;
+            const isUniform = matrix.every(row => row.length === columnCount);
+            if (!isUniform) {
+                throw '解析失败：矩阵行的列数不一致';
+            }
+        
+            return matrix;
+        }
+        
+
+        window.addEventListener('paste', function(event) {
+            // 获取剪贴板中的所有项目
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                // 检查是否为图像
+                if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
+                    // 调用函数处理图像
+                    // handleImagePaste(item.getAsFile(), targetId);
+                    saveOri(item.getAsFile());
+                }
+            }
+        });
+
+        function multiply_init(){
+            // 初始化矩阵乘法功能
+            document.getElementById('function-title').innerText = '矩阵乘法';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'block';
+            calculateMatrix();
+        }
+
+        function inverse_init(){
+            // 初始化矩阵求逆功能
+            document.getElementById('function-title').innerText = '矩阵求逆';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function add_init(){
+            // 初始化矩阵加法功能
+            document.getElementById('function-title').innerText = '矩阵加法';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'block';
+            calculateMatrix();
+        }
+
+        function minus_init(){
+            // 初始化矩阵减法功能
+            document.getElementById('function-title').innerText = '矩阵减法';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'block';
+            calculateMatrix();
+        }
+
+        function LU_init(){
+            // 初始化LU分解功能
+            document.getElementById('function-title').innerText = 'LU分解';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function cholesky_init(){
+            // 初始化Cholesky分解功能
+            document.getElementById('function-title').innerText = 'Cholesky分解';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        document.querySelectorAll('.nav-link').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.classList.add('active');
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    if (link !== this) {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (this.id == 'option1'){
+                    function_name = 'multiply';
+                    multiply_init();
+                }
+                else if (this.id == 'option2'){
+                    function_name = 'add';
+                    add_init();
+                }
+                else if (this.id == 'option3'){
+                    function_name = 'minus';
+                    minus_init();
+                }
+                else if (this.id == 'option4'){
+                    function_name = 'inverse';
+                    inverse_init();
+                }
+                else if (this.id == 'option5'){
+                    function_name = 'LU';
+                    LU_init();
+                }
+                else if (this.id == 'option6'){
+                    function_name = 'cholesky';
+                    cholesky_init();
+                }
+            });
+        });
+
+        document.querySelector('#matrix1-container').addEventListener('mouseenter', function(){
+            // 显示关闭按钮
+            document.getElementById('close-matrix1').style.display = 'block';
+        });
+
+        document.querySelector('#matrix1-container').addEventListener('mouseleave', function(){
+            // 隐藏关闭按钮
+            document.getElementById('close-matrix1').style.display = 'none';
+        });
+
+        document.querySelector('#close-matrix1').addEventListener('click', function(){
+            // 清空矩阵1按钮
+            closeMatrixImage('matrix1');
+        });
+
+        document.querySelector('#matrix2-container').addEventListener('mouseenter', function(){
+            // 显示关闭按钮
+            document.getElementById('close-matrix2').style.display = 'block';
+            
+        });
+
+        document.querySelector('#matrix2-container').addEventListener('mouseleave', function(){
+            // 隐藏关闭按钮
+            document.getElementById('close-matrix2').style.display = 'none';
+        });
+
+        document.querySelector('#close-matrix2').addEventListener('click', function(){
+            // 清空矩阵2按钮
+            closeMatrixImage('matrix2');
+        });
+
+        document.querySelector('#matrix1').addEventListener('focus', function(){
+            // 焦点在矩阵1输入框
+            inputarea1Focusing = true;
+            inputarea2Focusing = false;
+        });
+
+        document.querySelector('#matrix2').addEventListener('focus', function(){
+            // 焦点在矩阵2输入框
+            inputarea1Focusing = false;
+            inputarea2Focusing = true;
+        });
+
+        document.querySelector('#matrix1').addEventListener('input', function(){
+            // 矩阵1输入框内容发生变化
+            inputarea1Focusing = true;
+            inputarea2Focusing = false;
+            if (this.value){
+                saveOri(this.value);
+            }
+        });
+
+        document.querySelector('#matrix2').addEventListener('input', function(){
+            // 矩阵2输入框内容发生变化
+            inputarea1Focusing = false;
+            inputarea2Focusing = true;
+            if (this.value){
+                saveOri(this.value);
+            }
+        });
+
+        function closeMatrixImage(targetId) {
+            // 获取对应的文本输入框和关闭按钮元素
+            let input = document.getElementById(targetId);
+            let preview = document.getElementById(targetId + '-preview');
+
+            // 执行与关闭按钮相同的操作
+            input.style.display = 'block';
+            input.disabled = false;
+            preview.style.display = 'none'; // 隐藏图片预览
+            preview.src = ''; // 清除图片源，以确保不会再次显示
+
+            // 根据是哪个矩阵，清空相应的全局变量
+            if (targetId === 'matrix1') {
+                matrix1 = null;
+                matrix1_ori = null;
+            } else {
+                matrix2 = null;
+                matrix2_ori = null;
+            }
+        }
+
+        function renderMatrixMultiplication(matrix1, matrix2) {
+            var latexString = '';
+            if (!matrix1 || !matrix2) {
+                if (!matrix1 && matrix2) {
+                    console.log('矩阵1为空');
+                    latexString = `$$\\text{矩阵1为空} \\times ${matrix2.getLatexString()}$$`;
+                }
+                else if (matrix1 && !matrix2) {
+                    console.log('矩阵2为空');
+                    latexString = `$$${matrix1.getLatexString()} \\times \\text{矩阵2为空}$$`;
+                }
+                else if (!matrix1 && !matrix2) {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} \\times \\text{矩阵2为空}$$`;
+                }
+                else {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} \\times \\text{矩阵2为空}$$`;
+                }
+            }
+            else{
+                try{
+                    result_matrix = matrix1.multiply(matrix2);
+                    console.log('result_matrix:', result_matrix);
+                    // 构建矩阵乘法的完整LaTeX表示
+                    latexString = `$$ ${matrix1.getLatexString()} \\times ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                }
+                catch (e){
+                    console.log('矩阵乘法失败:', e);
+                    latexString = `$$${matrix1.getLatexString()} \\times ${matrix2.getLatexString()} = \\text{矩阵乘法失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixAdd(matrix1, matrix2) {
+            var latexString = '';
+            if (!matrix1 || !matrix2) {
+                if (!matrix1 && matrix2) {
+                    console.log('矩阵1为空');
+                    latexString = `$$\\text{矩阵1为空} + ${matrix2.getLatexString()}$$`;
+                }
+                else if (matrix1 && !matrix2) {
+                    console.log('矩阵2为空');
+                    latexString = `$$${matrix1.getLatexString()} + \\text{矩阵2为空}$$`;
+                }
+                else if (!matrix1 && !matrix2) {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} + \\text{矩阵2为空}$$`;
+                }
+                else {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} + \\text{矩阵2为空}$$`;
+                }
+            }
+            else{
+                try{
+                    result_matrix = matrix1.add(matrix2);
+                    console.log('result_matrix:', result_matrix);
+                    // 构建矩阵乘法的完整LaTeX表示
+                    latexString = `$$ ${matrix1.getLatexString()} + ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                }
+                catch (e){
+                    console.log('矩阵加法失败:', e);
+                    latexString = `$$${matrix1.getLatexString()} + ${matrix2.getLatexString()} = \\text{矩阵加法失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixMinus(matrix1, matrix2) {
+            var latexString = '';
+            if (!matrix1 || !matrix2) {
+                if (!matrix1 && matrix2) {
+                    console.log('矩阵1为空');
+                    latexString = `$$\\text{矩阵1为空} - ${matrix2.getLatexString()}$$`;
+                }
+                else if (matrix1 && !matrix2) {
+                    console.log('矩阵2为空');
+                    latexString = `$$${matrix1.getLatexString()} - \\text{矩阵2为空}$$`;
+                }
+                else if (!matrix1 && !matrix2) {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} - \\text{矩阵2为空}$$`;
+                }
+                else {
+                    console.log('矩阵1和矩阵2为空');
+                    latexString = `$$\\text{矩阵1为空} - \\text{矩阵2为空}$$`;
+                }
+            }
+            else{
+                try{
+                    result_matrix = matrix1.subtract(matrix2);
+                    console.log('result_matrix:', result_matrix);
+                    // 构建矩阵乘法的完整LaTeX表示
+                    latexString = `$$ ${matrix1.getLatexString()} - ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                }
+                catch (e){
+                    console.log('矩阵减法失败:', e);
+                    latexString = `$$${matrix1.getLatexString()} - ${matrix2.getLatexString()} = \\text{矩阵减法失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixInverse(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}^{-1}$$`;
+            }
+            else{
+                try{
+                    result_matrix = matrix1.inverse();
+                    console.log('result_matrix:', result_matrix);
+                    // 构建矩阵乘法的完整LaTeX表示
+                    latexString = `$$ ${matrix1.getLatexString()}^{-1} = ${result_matrix.getLatexString()} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求逆失败:', e);
+                    latexString = `$$${matrix1.getLatexString()}^{-1} = \\text{矩阵求逆失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixLU(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.luDecomposition();
+                    console.log('result:', result);
+                    l_matrix = result.L;
+                    u_matrix = result.U;
+                    // 构建矩阵乘法的完整LaTeX表示
+                    if (result.p){
+                        p_matrix = result.p;
+                        latexString = `$$${p_matrix.getLatexString()} \\times ${matrix1.getLatexString()} \\ =  ${l_matrix.getLatexString()} \\times ${u_matrix.getLatexString()}$$`;
+                    }
+                    else{
+                        latexString = `$$${matrix1.getLatexString()} \\ = ${l_matrix.getLatexString()} \\times ${u_matrix.getLatexString()}$$`;
+                    }
+                }
+                catch (e){
+                    console.log('LU分解失败:', e);
+                    latexString = `$$${matrix1.getLatexString()} = \\text{LU分解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixCholesky(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result_matrix = matrix1.choleskyDecomposition();
+                    console.log('result_matrix:', result_matrix);
+                    // 构建矩阵乘法的完整LaTeX表示
+                    latexString = `$$ ${matrix1.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                }
+                catch (e){
+                    console.log('Cholesky分解失败:', e);
+                    latexString = `$$${matrix1.getLatexString()} = \\text{Cholesky分解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function calculateMatrix() {
+            if (function_name == 'multiply'){
+                if (!matrix1 || !matrix2) {
+                    console.log('矩阵1或矩阵2为空');
+                }
+                renderMatrixMultiplication(matrix1, matrix2);
+            } 
+            else if (function_name == 'inverse'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixInverse(matrix1);
+            }
+            else if (function_name == 'add'){
+                if (!matrix1 || !matrix2) {
+                    console.log('矩阵1或矩阵2为空');
+                }
+                renderMatrixAdd(matrix1, matrix2);
+            }
+            else if (function_name == 'minus'){
+                if (!matrix1 || !matrix2) {
+                    console.log('矩阵1或矩阵2为空');
+                }
+                renderMatrixMinus(matrix1, matrix2);
+            }
+            else if (function_name == 'LU'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixLU(matrix1);
+            }
+            else if (function_name == 'cholesky'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixCholesky(matrix1);
+            }
+        }
+
+        // 功能：双击图片则关闭图片
+        function setupDoubleClickToCloseImage() {
+            // 为每个图片预览元素添加双击关闭功能
+            document.querySelectorAll('.matrix-preview').forEach(preview => {
+                preview.addEventListener('dblclick', function() {
+                    // 根据图片元素的 ID 确定是哪个矩阵的预览被双击
+                    let targetId = this.id.includes('matrix1') ? 'matrix1' : 'matrix2';
+                    
+                    closeMatrixImage(targetId);
+                });
+            });
+        }
+
+
+        function autoHeight(){
+            const func = function(e){
+                // Set the height of the textarea to the height of its content
+                if (this.value.indexOf("\n") != -1){
+                    var lines = this.value.split("\n")
+                    var linesCount = lines.length
+                }
+                else{
+                    var linesCount = 1
+                }
+                if (linesCount > 2){
+                    this.style.height = (linesCount * 1.5) + "em"
+                }
+                else{
+                    this.style.height = "3em"
+                }
+            }
+            document.getElementById('matrix1').addEventListener('input', func);
+            document.getElementById('matrix2').addEventListener('input', func);
+        }
+
+
+
+        // 在页面加载完毕后调用此函数以设置事件监听器
+        document.addEventListener('DOMContentLoaded', setupDoubleClickToCloseImage);
+        document.addEventListener('DOMContentLoaded', autoHeight);
+    </script>
+</body>
+</html>
