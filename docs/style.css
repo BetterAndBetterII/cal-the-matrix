@@ -30,7 +30,6 @@ body, html {
     border: 2px solid #ddd; /* 边框颜色 */
     padding: 20px;
     margin-bottom: 20px; /* 与下一个元素的间距 */
-    resize: none; /* 去除可调整大小的功能 */
 }
 .input-matrix:focus {
     border-color: #ff0000; /* 聚焦时的边框颜色 */
@@ -44,7 +43,8 @@ body, html {
     margin: 0 10px 0 10px; /* 与其他输入框的间距 */
     padding: 5px;
     border-radius: 5px;
-    height: auto;
+    height: fit-content;
+    max-height: 200px; /* 最大高度 */
     z-index: 1;
 }
 .content {

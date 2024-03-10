@@ -693,8 +693,33 @@
             });
         }
 
+
+        function autoHeight(){
+            const func = function(e){
+                // Set the height of the textarea to the height of its content
+                if (this.value.indexOf("\n") != -1){
+                    var lines = this.value.split("\n")
+                    var linesCount = lines.length
+                }
+                else{
+                    var linesCount = 1
+                }
+                if (linesCount > 2){
+                    this.style.height = (linesCount * 1.5) + "em"
+                }
+                else{
+                    this.style.height = "3em"
+                }
+            }
+            document.getElementById('matrix1').addEventListener('input', func);
+            document.getElementById('matrix2').addEventListener('input', func);
+        }
+
+
+
         // 在页面加载完毕后调用此函数以设置事件监听器
         document.addEventListener('DOMContentLoaded', setupDoubleClickToCloseImage);
+        document.addEventListener('DOMContentLoaded', autoHeight);
     </script>
 </body>
 </html>
