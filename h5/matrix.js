@@ -160,6 +160,7 @@ class Matrix {
         return { L: L_matrix, U: U_matrix, P: P_matrix };
       } catch (error) {
         console.error('Error calculating the LU decomposition:', error);
+        throw new Error(error.message);
       }
     }
   
@@ -197,7 +198,7 @@ class Matrix {
             console.log('Cholesky matrix:', L);
             return new Matrix(L);
         } catch (error) {
-            throw new Error('Error calculating the Cholesky decomposition: ' + error.message);
+            throw new Error(error.message);
         }
     }
   
@@ -208,6 +209,7 @@ class Matrix {
         return new Matrix(inv);
       } catch (error) {
         console.error('Error calculating the inverse:', error);
+        throw new Error(error.message);
       }
     }
   
@@ -217,6 +219,7 @@ class Matrix {
         return new Matrix(product);
       } catch (error) {
         console.error('Error multiplying matrices:', error);
+        throw new Error(error.message);
       }
     }
   
@@ -226,6 +229,7 @@ class Matrix {
         return new Matrix(sum);
       } catch (error) {
         console.error('Error adding matrices:', error);
+        throw new Error(error.message);
       }
     }
   
@@ -235,6 +239,7 @@ class Matrix {
         return new Matrix(difference);
       } catch (error) {
         console.error('Error subtracting matrices:', error);
+        throw new Error(error.message);
       }
     }
 }

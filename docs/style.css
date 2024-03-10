@@ -3,10 +3,23 @@ body, html {
     margin: 0;
     overflow: hidden; /* 隐藏滚动条并去除滚动 */
 }
+#big-title {
+    color: white;
+}
+#header {
+    background-color: #0d6efd;
+    padding: 0;
+}
 .sidebar {
     min-height: 100%;
     border-right: 1px solid #ddd;
+    padding: 0;
     overflow-y: auto; /* 侧边栏内部滚动 */
+}
+.active {
+    background-color: #ddd; /* 选中的背景颜色 */
+    margin: 0 5px;
+    border-radius: 5px;
 }
 .main-content {
     padding: 20px;
@@ -50,7 +63,6 @@ body, html {
     width: 100%; /* 或者具体宽度 */
     margin: 0 5px; /* 根据需要调整 */
     max-height: 200px; /* 最大高度 */
-    position: relative;
 }
 
 .matrix-preview {
@@ -93,4 +105,10 @@ body, html {
     margin: 0 auto;
     border: #ddd 2px solid;
     border-radius: 5px;
+}
+
+#result {
+    overflow-x: auto; /* 当内容溢出时在x轴方向（水平方向）显示滚动条 */
+    max-width: 100%; /* 限制最大宽度，确保div不会超出其容器的宽度 */
+    white-space: nowrap; /* 防止内部的文本或其他元素换行，确保了如果内容超出了当前宽度，就会显示滚动条 */
 }
