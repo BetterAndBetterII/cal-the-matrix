@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>线性代数计算器</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -24,6 +24,12 @@
                         <a href="#" class="nav-link" id="option4">矩阵求逆</a>
                         <a href="#" class="nav-link" id="option5">LU分解</a>
                         <a href="#" class="nav-link" id="option6">Cholesky分解</a>
+                        <a href="#" class="nav-link" id="option7">矩阵求解</a>
+                        <a href="#" class="nav-link" id="option8">化简RREF</a>
+                        <a href="#" class="nav-link" id="option9">奇异值SVD分解</a>
+                        <a href="#" class="nav-link" id="option10">QR分解</a>
+                        <a href="#" class="nav-link" id="option11">矩阵的秩</a>
+                        <a href="#" class="nav-link" id="option12">矩阵范数</a>
                     </li>
                     <!-- 其他选项 -->
                 </ul>
@@ -47,20 +53,30 @@
                     </div>
                     <!-- <button onclick="calculateMatrix()" class="btn btn-primary">计算</button> -->
                     <div class="mt-3">识别结果：</div>
+                    <!-- 开关(boostrap)切换小数/分数显示 -->
+                    <div class="mb-3">
+                        <div class="btn-group" role="group" aria-label="number type">
+                            <input type="radio" class="btn-check" name="number_type" id="fractional" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="fractional">分数</label>
+                
+                            <input type="radio" class="btn-check" name="number_type" id="decimal" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="decimal">小数</label>
+                        </div>
+                    </div>
                     <div id="result" class="mt-3"></div>
                 </div>
                 <!-- 其他内容区域 -->
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>  <!-- crypto-js -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.5.0/axios.min.js"></script>  <!-- axios -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js" integrity="sha512-D/RyeW6S1nM+OJUBeS/w8U1CVwAaR3EMBRzaacbYkjMqgF+4rcvYR50LC+6egba1WHJSmf6Sua2Zj5V+Cg85lQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>  <!-- mathjs -->
-    <link rel="dns-prefetch" href="http://cdn.mathjax.org">
+    <script src="https://unpkg.com/svd-js" type="application/javascript"></script>
+    <script src="./bootstrap.bundle.min.js"></script>
+    <script src="./crypto-js.min.js"></script>  <!-- crypto-js -->
+    <script src="./axios.min.js"></script>  <!-- axios -->
+    <script src="./math.js"></script>  <!-- mathjs -->
+    <!-- <link rel="dns-prefetch" href="http://cdn.mathjax.org"> -->
     <!-- <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/latest.min.js" integrity="sha512-QQm/4OlaCH+aZ5vZH9j1fDm1VP4JCqcYPvQgjEvDNm+jEA5rScyBKAo7IbonniacCAX3AHoCZWaJLIQ2MARNxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+    <script id="MathJax-script" src="./tex-mml-svg.js"></script>
     <script type="module" src="./simpletex.js"></script>
     <script type="module" src="./matrix.js"></script>
     
@@ -77,13 +93,28 @@
 
         var function_name = 'multiply';
 
-        async function show_warning(message) {
+        var number_type = 'fractional';
+
+        async function show_warning(message, duration) {
             const warning = document.getElementById('warning');
             warning.innerHTML = message;
             warning.style.display = 'block';
-            setTimeout(() => {
-                warning.style.display = 'none';
-            }, 5000);
+            if (duration) {
+                setTimeout(() => {
+                    warning.style.display = 'none';
+                }, duration);
+            }
+        }
+
+        function show_loading() {
+            const warning = document.getElementById('warning');
+            warning.innerHTML = '正在识别...';
+            warning.style.display = 'block';
+        }
+
+        function hide_warning() {
+            const warning = document.getElementById('warning');
+            warning.style.display = 'none';
         }
 
         // ori -> matrix
@@ -104,7 +135,7 @@
                     to = "matrix2";
                 }
                 else{
-                    show_warning('矩阵1和矩阵2都已存在');
+                    show_warning('矩阵1和矩阵2都已存在', 5000);
                 }
             }
 
@@ -167,6 +198,7 @@
                 textarea.disabled = true;
             };
             reader.readAsDataURL(imageFile);
+            show_loading();
             ocr(imageFile).then((result) => {
                 // result -> latex string
                 console.log('识别结果:', result);
@@ -175,9 +207,10 @@
                 }
                 catch (e){
                     console.log('解析失败:', e);
-                    show_warning('解析失败，请重试');
+                    show_warning('解析失败，请重试' + e.message);
                     return;
                 }
+                hide_warning();
                 console.log('解析结果:', matrix);
                 // 如果矩阵1已存在,matrix作为矩阵2,否则则为矩阵1
                 if (targetId === 'matrix1') {
@@ -199,7 +232,7 @@
             }
             catch (e){
                 console.log('解析失败:', e);
-                show_warning('解析失败');
+                show_warning('解析失败：' + e.message);
                 return;
             }
             console.log('parseFromArray:', matrix);
@@ -298,6 +331,55 @@
             calculateMatrix();
         }
 
+        function solve_init(){
+            // 初始化矩阵求解功能
+            document.getElementById('function-title').innerText = '矩阵求解';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。最后一列将自动设为增广矩阵的右侧向量。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function rref_init(){
+            document.getElementById('function-title').innerText = '化简RREF';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function svd_init(){
+            document.getElementById('function-title').innerText = '奇异值SVD分解';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function qr_init(){
+            document.getElementById('function-title').innerText = 'QR分解';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function d_init(){
+            document.getElementById('function-title').innerText = '矩阵的秩';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
+        function norm_init(){
+            document.getElementById('function-title').innerText = '矩阵范数';
+            document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+            document.getElementById('matrix1-container').style.display = 'block';
+            document.getElementById('matrix2-container').style.display = 'none';
+            calculateMatrix();
+        }
+
         function LU_init(){
             // 初始化LU分解功能
             document.getElementById('function-title').innerText = 'LU分解';
@@ -349,6 +431,30 @@
                 else if (this.id == 'option6'){
                     function_name = 'cholesky';
                     cholesky_init();
+                }
+                else if (this.id == 'option7'){
+                    function_name = 'solve';
+                    solve_init();
+                }
+                else if (this.id == 'option8'){
+                    function_name = 'rref';
+                    rref_init();
+                }
+                else if (this.id == 'option9'){
+                    function_name = 'svd';
+                    svd_init();
+                }
+                else if (this.id == 'option10'){
+                    function_name = 'qr';
+                    qr_init();
+                }
+                else if (this.id == 'option11'){
+                    function_name = 'd';
+                    d_init();
+                }
+                else if (this.id == 'option12'){
+                    function_name = 'norm';
+                    norm_init();
                 }
             });
         });
@@ -414,6 +520,20 @@
             }
         });
 
+        document.querySelector('#fractional').addEventListener('click', function(){
+            console.log('fractional');
+            // 切换到分数显示
+            number_type = 'fractional';
+            calculateMatrix();
+        });
+
+        document.querySelector('#decimal').addEventListener('click', function(){
+            console.log('decimal');
+            // 切换到小数显示
+            number_type = 'decimal';
+            calculateMatrix();
+        });
+
         function closeMatrixImage(targetId) {
             // 获取对应的文本输入框和关闭按钮元素
             let input = document.getElementById(targetId);
@@ -440,11 +560,11 @@
             if (!matrix1 || !matrix2) {
                 if (!matrix1 && matrix2) {
                     console.log('矩阵1为空');
-                    latexString = `$$\\text{矩阵1为空} \\times ${matrix2.getLatexString()}$$`;
+                    latexString = `$$\\text{矩阵1为空} \\times ${matrix2.getLatexString(number_type)}$$`;
                 }
                 else if (matrix1 && !matrix2) {
                     console.log('矩阵2为空');
-                    latexString = `$$${matrix1.getLatexString()} \\times \\text{矩阵2为空}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} \\times \\text{矩阵2为空}$$`;
                 }
                 else if (!matrix1 && !matrix2) {
                     console.log('矩阵1和矩阵2为空');
@@ -460,11 +580,188 @@
                     result_matrix = matrix1.multiply(matrix2);
                     console.log('result_matrix:', result_matrix);
                     // 构建矩阵乘法的完整LaTeX表示
-                    latexString = `$$ ${matrix1.getLatexString()} \\times ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                    latexString = `$$ ${matrix1.getLatexString(number_type)} \\times ${matrix2.getLatexString(number_type)} = ${result_matrix.getLatexString(number_type)} $$`;
                 }
                 catch (e){
                     console.log('矩阵乘法失败:', e);
-                    latexString = `$$${matrix1.getLatexString()} \\times ${matrix2.getLatexString()} = \\text{矩阵乘法失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} \\times ${matrix2.getLatexString(number_type)} = \\text{矩阵乘法失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixSolve(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.solve();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    // \{ env
+                    // 构建每个解的LaTeX字符串，使用cases环境
+                    result_str = result.map((item, index) => {
+                        return `x_{${index+1}} = ${item}`;
+                    }).join(' \\\\ '); // 使用\\\\作为LaTeX中的换行符
+                    // 构建矩阵求解的完整LaTeX表示，使用左大括号
+                    latexString = `$$${matrix1.getAugmentedLatexString()} \\rightarrow \\begin{cases} ${result_str} \\end{cases}$$`;
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$${matrix1.getAugmentedLatexString()} = \\text{矩阵求解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixRREF(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.rref();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    latexString = `$$${matrix1.getLatexString(number_type)} \\rightarrow ${result.getLatexString(number_type)} $$`;
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$${matrix1.getAugmentedLatexString()} = \\text{矩阵求解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixSVD(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.svd();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    latexString = `$$${matrix1.getLatexString(number_type)} = ${result.U.getLatexString(number_type)} \\times ${result.S.getLatexString(number_type)} \\times ${result.V.getLatexString(number_type)}^T$$`;
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$${matrix1.getLatexString(number_type)} = \\text{SVD分解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixQR(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.qr();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    latexString = `$$${matrix1.getLatexString(number_type)} = ${result.Q.getLatexString(number_type)} \\times ${result.R.getLatexString(number_type)}$$`;
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$${matrix1.getLatexString(number_type)} = \\text{QR分解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixD(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.determinant();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    if (number_type=='fractional'){
+                        latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = ${math.fraction(result)}$$`;
+                    }else{
+                        latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = ${result}$$`;
+                    }
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = \\text{求解失败${e}}$$`;
+                }
+            }
+            // 使用MathJax渲染LaTeX字符串
+            const container = document.getElementById('result');
+            container.innerHTML = latexString;
+            MathJax.typesetPromise([container]).catch(function (err) {
+              console.error('MathJax render error:', err);
+            });
+        }
+
+        function renderMatrixNorm(matrix1) {
+            var latexString = '';
+            if (!matrix1) {
+                console.log('矩阵1为空');
+                latexString = `$$\\text{矩阵1为空}$$`;
+            }
+            else{
+                try{
+                    result = matrix1.norm();
+                    // result is a list of numbers
+                    console.log('result_matrix:', result);
+                    // latexString = `$$\\|${matrix1.getLatexString(number_type)}\\| = ${result}$$`;
+                    if (number_type == 'fractional'){
+                        latexString = `$$\\|${matrix1.getLatexString(number_type)}\\| = ${math.fraction(result)}$$`;
+                    } else {
+                        latexString = `$$\\|${matrix1.getLatexString(number_type)}\\| = ${result}$$`;
+                    }
+                    // latexString = `$$  ${result_str} $$`;
+                }
+                catch (e){
+                    console.log('矩阵求解失败:', e);
+                    latexString = `$$\\|${matrix1.getLatexString(number_type)}\\| = \\text{求解失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -480,11 +777,11 @@
             if (!matrix1 || !matrix2) {
                 if (!matrix1 && matrix2) {
                     console.log('矩阵1为空');
-                    latexString = `$$\\text{矩阵1为空} + ${matrix2.getLatexString()}$$`;
+                    latexString = `$$\\text{矩阵1为空} + ${matrix2.getLatexString(number_type)}$$`;
                 }
                 else if (matrix1 && !matrix2) {
                     console.log('矩阵2为空');
-                    latexString = `$$${matrix1.getLatexString()} + \\text{矩阵2为空}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} + \\text{矩阵2为空}$$`;
                 }
                 else if (!matrix1 && !matrix2) {
                     console.log('矩阵1和矩阵2为空');
@@ -500,11 +797,11 @@
                     result_matrix = matrix1.add(matrix2);
                     console.log('result_matrix:', result_matrix);
                     // 构建矩阵乘法的完整LaTeX表示
-                    latexString = `$$ ${matrix1.getLatexString()} + ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                    latexString = `$$ ${matrix1.getLatexString(number_type)} + ${matrix2.getLatexString(number_type)} = ${result_matrix.getLatexString(number_type)} $$`;
                 }
                 catch (e){
                     console.log('矩阵加法失败:', e);
-                    latexString = `$$${matrix1.getLatexString()} + ${matrix2.getLatexString()} = \\text{矩阵加法失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} + ${matrix2.getLatexString(number_type)} = \\text{矩阵加法失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -520,11 +817,11 @@
             if (!matrix1 || !matrix2) {
                 if (!matrix1 && matrix2) {
                     console.log('矩阵1为空');
-                    latexString = `$$\\text{矩阵1为空} - ${matrix2.getLatexString()}$$`;
+                    latexString = `$$\\text{矩阵1为空} - ${matrix2.getLatexString(number_type)}$$`;
                 }
                 else if (matrix1 && !matrix2) {
                     console.log('矩阵2为空');
-                    latexString = `$$${matrix1.getLatexString()} - \\text{矩阵2为空}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} - \\text{矩阵2为空}$$`;
                 }
                 else if (!matrix1 && !matrix2) {
                     console.log('矩阵1和矩阵2为空');
@@ -540,11 +837,11 @@
                     result_matrix = matrix1.subtract(matrix2);
                     console.log('result_matrix:', result_matrix);
                     // 构建矩阵乘法的完整LaTeX表示
-                    latexString = `$$ ${matrix1.getLatexString()} - ${matrix2.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                    latexString = `$$ ${matrix1.getLatexString(number_type)} - ${matrix2.getLatexString(number_type)} = ${result_matrix.getLatexString(number_type)} $$`;
                 }
                 catch (e){
                     console.log('矩阵减法失败:', e);
-                    latexString = `$$${matrix1.getLatexString()} - ${matrix2.getLatexString()} = \\text{矩阵减法失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} - ${matrix2.getLatexString(number_type)} = \\text{矩阵减法失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -566,11 +863,11 @@
                     result_matrix = matrix1.inverse();
                     console.log('result_matrix:', result_matrix);
                     // 构建矩阵乘法的完整LaTeX表示
-                    latexString = `$$ ${matrix1.getLatexString()}^{-1} = ${result_matrix.getLatexString()} $$`;
+                    latexString = `$$ ${matrix1.getLatexString(number_type)}^{-1} = ${result_matrix.getLatexString(number_type)} $$`;
                 }
                 catch (e){
                     console.log('矩阵求逆失败:', e);
-                    latexString = `$$${matrix1.getLatexString()}^{-1} = \\text{矩阵求逆失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)}^{-1} = \\text{矩阵求逆失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -596,15 +893,15 @@
                     // 构建矩阵乘法的完整LaTeX表示
                     if (result.P){
                         p_matrix = result.P;
-                        latexString = `$$${p_matrix.getLatexString()} \\times ${matrix1.getLatexString()} \\ =  ${l_matrix.getLatexString()} \\times ${u_matrix.getLatexString()}$$`;
+                        latexString = `$$${p_matrix.getLatexString(number_type)} \\times ${matrix1.getLatexString(number_type)} \\ =  ${l_matrix.getLatexString(number_type)} \\times ${u_matrix.getLatexString(number_type)}$$`;
                     }
                     else{
-                        latexString = `$$${matrix1.getLatexString()} \\ = ${l_matrix.getLatexString()} \\times ${u_matrix.getLatexString()}$$`;
+                        latexString = `$$${matrix1.getLatexString(number_type)} \\ = ${l_matrix.getLatexString(number_type)} \\times ${u_matrix.getLatexString(number_type)}$$`;
                     }
                 }
                 catch (e){
                     console.log('LU分解失败:', e);
-                    latexString = `$$${matrix1.getLatexString()} = \\text{LU分解失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} = \\text{LU分解失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -623,14 +920,16 @@
             }
             else{
                 try{
-                    result_matrix = matrix1.choleskyDecomposition();
-                    console.log('result_matrix:', result_matrix);
+                    result = matrix1.choleskyDecomposition();
+                    console.log('result_matrix:', result);
+                    const L_matrix = result["L"];
+                    const U_matrix = result["U"];
                     // 构建矩阵乘法的完整LaTeX表示
-                    latexString = `$$ ${matrix1.getLatexString()} = ${result_matrix.getLatexString()} $$`;
+                    latexString = `$$ ${matrix1.getLatexString(number_type)} = ${L_matrix.getLatexString(number_type)} \\times ${U_matrix.getLatexString(number_type)} $$`;
                 }
                 catch (e){
                     console.log('Cholesky分解失败:', e);
-                    latexString = `$$${matrix1.getLatexString()} = \\text{Cholesky分解失败${e}}$$`;
+                    latexString = `$$${matrix1.getLatexString(number_type)} = \\text{Cholesky分解失败${e}}$$`;
                 }
             }
             // 使用MathJax渲染LaTeX字符串
@@ -678,6 +977,43 @@
                 }
                 renderMatrixCholesky(matrix1);
             }
+            else if (function_name == 'solve'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixSolve(matrix1);
+            }
+            else if (function_name == 'rref') {
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixRREF(matrix1);
+            }
+            else if (function_name == 'svd'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixSVD(matrix1);
+            }
+            else if (function_name == 'qr'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixQR(matrix1);
+            }
+            else if (function_name == 'd'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixD(matrix1);
+            }
+            else if (function_name == 'norm'){
+                if (!matrix1) {
+                    console.log('矩阵1为空');
+                }
+                renderMatrixNorm(matrix1);
+            }
+
         }
 
         // 功能：双击图片则关闭图片

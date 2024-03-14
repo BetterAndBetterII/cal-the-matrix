@@ -64,29 +64,68 @@ function elementToTex(element) {
       if (element.d === 1) {
           return (element.n * element.s);
       }
-      var res = '\\frac{' + (element.n * element.s) + '}{' + element.d + '}';
+      var res = element.s > 0 ? '\\frac{' + (element.n) + '}{' + element.d + '}' : '-' + '\\frac{' + element.n + '}{' + element.d + '}';
       return res;
   }
   return element;
 }
 
 function parseElement(element) {
-  // Match LaTeX fractions
-  const fracRegex = /\\frac{([^}]+)}{([^}]+)}/;
-  const match = element.match(fracRegex);
-  if (match) {
-      const numerator = parseFloat(match[1]);
-      const denominator = parseFloat(match[2]);
+  if (element.match(/\\frac{([^}]+)}{([^}]+)}/)) {
+      // 尝试解析分子和分母
+      let numerator = match[1].trim();
+      let denominator = match[2].trim();
+
+      // 将分子和分母转换为数字
+      numerator = parseLaTeXNumber(numerator);
+      denominator = parseLaTeXNumber(denominator);
+
       if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
-          return math.fraction(numerator, denominator); // Return the fraction as a mathjs fraction
-          // return numerator / denominator; // Return the fraction as a division
+          return numerator / denominator; // 直接返回分数的计算结果
       } else {
-          return element; // Return the original string if parsing fails
+          return element; // 如果解析失败，返回原始字符串
       }
-  } else {
-      const num = parseFloat(element);
-      return isNaN(num) ? element : num; // Parse as a float or return the original string
+  } else if (element.match(/\\sqrt{([^}]+)}/)) {
+      // 尝试解析平方根
+      let match = element.match(/\\sqrt{([^}]+)}/);
+      let radicand = match[1].trim();
+      radicand = parseLaTeXNumber(radicand);
+      if (!isNaN(radicand)) {
+          return Math.sqrt(radicand); // 返回平方根的计算结果
+      } else {
+          return element; // 如果解析失败，返回原始字符串
+      }
   }
+  else {
+      const num = parseLaTeXNumber(element);
+      return isNaN(num) ? element : num; // 尝试将元素解析为浮点数或返回原始字符串
+  }
+}
+
+function parseLaTeXNumber(input) {
+  // 处理一些简单的LaTeX数学表达式，例如 "\frac12" 可以拓展这个函数来处理更复杂的情况
+  if (input.match(/^\d+$/)) { // 纯数字
+      return parseFloat(input);
+  } else if (input.match(/\\sqrt{([^}]+)}/)) {
+    let underRoot = parseLaTeXNumber(match[1].trim());
+    if (!isNaN(underRoot)) {
+        return Math.sqrt(underRoot);
+    }
+  } else if (input.match(/\\frac{([^}]+)}{([^}]+)}/)) {
+    let numerator = parseLaTeXNumber(match[1].trim());
+    let denominator = parseLaTeXNumber(match[2].trim());
+    if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+        return numerator / denominator;
+    }
+  } else if (input.match(/^\\frac\d+$/)) { // 例如 "\frac12"
+    let parts = input.replace('\\frac', '').split('');
+    return parseLaTeXNumber(parts[0]) / parseLaTeXNumber(parts[1]);
+  } else if (input.match(/^\\sqrt\d+$/)) { // 例如 "\sqrt2"
+    let num = input.replace('\\sqrt', '');
+    return math.sqrt(parseLaTeXNumber(num));
+  } 
+  // 可以在这里添加更多的解析逻辑来处理其他LaTeX数学表达式
+  return NaN; // 默认返回NaN
 }
 
 class Matrix {
@@ -139,26 +178,44 @@ class Matrix {
       if (!isWellFormed) {
           throw new Error('The LaTeX matrix is not well-formed.');
       }
-
-      return new Matrix(matrixArray); // Make sure you have a Matrix constructor or replace with appropriate handling
+      try{
+          return new Matrix(math.fraction(matrixArray)); // Make sure you have a Matrix constructor or replace with appropriate handling
+      } catch (error) {
+          return new Matrix(matrixArray);
+      }
   }
 
-    getLatexString() {
-        // if fraction format
-        if (this.matrix.toArray().every(row => row.every(element => typeof element === 'object'))) {
-            // every element is a fraction
+    getLatexString(number_type = 'fractional') {
+        if (number_type==='fractional') {
+          const rows = this.matrix.toArray();
+          // const rowStrings = rows.map(row => row.join(' & '));
+          const rowStrings = rows.map(row => row.map(element => elementToTex(element)).join(' & '));
+          const latexRows = rowStrings.join(' \\\\ ');
+          return `\\begin{bmatrix} ${latexRows} \\end{bmatrix}`;
+        } else {
+          console.log("number_type is Demical!");
+            // if not fraction format
             const rows = this.matrix.toArray();
-            const rowStrings = rows.map(row => row.map(element => elementToTex(element)).join(' & '));
+            const rowStrings = rows.map(row => row.join(' & '));
             const latexRows = rowStrings.join(' \\\\ ');
             return `\\begin{bmatrix} ${latexRows} \\end{bmatrix}`;
         }
-
-        // not fraction format
-        const rows = this.matrix.toArray();
-        const rowStrings = rows.map(row => row.join(' & '));
-        const latexRows = rowStrings.join(' \\\\ ');
-        return `\\begin{bmatrix} ${latexRows} \\end{bmatrix}`;
     }
+
+    getAugmentedLatexString() {
+      const rows = this.matrix.toArray();
+      const numRows = rows.length;
+      const numCols = rows[0].length;
+      
+      // 为增广矩阵生成列格式字符串，最后一列前加入竖线
+      let colFormat = Array(numCols - 1).fill('c').join(' ') + ' | c';      
+      // const rowStrings = rows.map(row => row.join(' & '));
+      const rowStrings = rows.map(row => row.map(element => elementToTex(element)).join(' & '));
+      const latexRows = rowStrings.join(' \\\\ ');
+      return `\\left[\\begin{array}{${colFormat}} ${latexRows} \\end{array}\\right]`;
+    }
+  
+  
   
     luDecomposition() {
       try {
@@ -242,10 +299,218 @@ class Matrix {
           }
       }
 
-      console.log('Cholesky matrix:', L);
+      // 给出对应U
+
+      let U = new Array(size);
+      for (let i = 0; i < size; i++) {
+        U[i] = new Array(size).fill(0);
+      }
+
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          U[i][j] = L[j][i];
+        }
+      }
+
+      console.log('Cholesky matrix, L:', L);
+      console.log('Cholesky matrix, U:', U);
       // 根据你的需求返回L
-      return (new Matrix(math.fraction(L))); // 如果你使用mathjs的Matrix类型
-  }
+      return {
+        "L": new Matrix(math.fraction(L)),
+        "U": new Matrix(math.fraction(U))
+      }
+      // return (new Matrix(math.fraction(L))); // 如果你使用mathjs的Matrix类型
+    }
+    svd() {
+      try {
+        const copy = math.clone(this.matrix).toArray();
+        console.log('SVD:', copy);
+        const result = SVDJS.SVD(copy);
+        // const U_matrix = new Matrix(math.fraction(result.U.toArray()));
+        console.log('Result:', result);
+        // convert q to elementary matrix
+        var q = [];
+        for (let i = 0; i < result.q.length; i++) {
+
+            q.push([]);
+        }
+        for (let i = 0; i < result.q.length; i++) {
+            for (let j = 0; j < result.q.length; j++) {
+                if (i === j) {
+                    q[i][j] = result.q[i];
+                } else {
+                    q[i][j] = 0;
+                }
+            }
+        }
+        console.log('Q:', q);
+        const U_matrix = new Matrix(math.fraction(result.u));
+        const S_matrix = new Matrix(math.fraction(q));
+        const V_matrix = new Matrix(math.fraction(result.v));
+        // const S_matrix = new Matrix(math.fraction(math.matrix(result.S).toArray()));
+        // const V_matrix = new Matrix(math.fraction(math.matrix(result.V).toArray()));
+        return { U: U_matrix, S: S_matrix, V: V_matrix };
+      } catch (error) {
+        console.error('Error calculating the singular value decomposition:', error);
+        throw new Error(error.message);
+      }
+    }
+    qr() {
+      try {
+        const result = math.qr(this.matrix);
+        const Q_matrix = new Matrix(math.fraction(result.Q.toArray()));
+        const R_matrix = new Matrix(math.fraction(result.R.toArray()));
+        return { Q: Q_matrix, R: R_matrix };
+      } catch (error) {
+        console.error('Error calculating the QR decomposition:', error);
+        throw new Error(error.message);
+      }
+    }
+    determinant() {
+      try {
+        const det = math.det(this.matrix);
+        console.log('Determinant:', det);
+        return det;
+      } catch (error) {
+        console.error('Error calculating the determinant:', error);
+        throw new Error(error.message);
+      }
+    }
+    norm() {
+      try {
+        const norm = math.norm(this.matrix);
+        console.log('Norm:', norm);
+        return norm;
+      } catch (error) {
+        console.error('Error calculating the norm:', error);
+        throw new Error(error.message);
+      }
+    }
+    rref() {
+      try {
+        var copy = math.clone(this.matrix);
+        var rowCount = copy.size()[0];
+        var colCount = copy.size()[1]; // 增广矩阵的列数
+
+        for (let i = 0; i < rowCount; i++) { // 修复点1：使用rowCount
+          // 选主元
+          var max = 0;
+          var maxIndex = i;
+          for (let j = i; j < rowCount; j++) { // 修复点1：使用rowCount
+              if (Math.abs(copy._data[j][i]) > max) {
+                  max = Math.abs(copy._data[j][i]);
+                  maxIndex = j;
+              }
+          }
+          // 交换行
+          if (maxIndex !== i) {
+              [copy._data[i], copy._data[maxIndex]] = [copy._data[maxIndex], copy._data[i]];
+          }
+          var divisor = copy._data[i][i];
+          if (divisor !== 0) { // 避免除以0
+              for (let j = 0; j < colCount; j++) {
+                  copy._data[i][j] /= divisor;
+              }
+          }
+
+          for (let j = 0; j < rowCount; j++) { // 修复点1：使用rowCount
+              if (j !== i) {
+                  if (copy._data[i][i] !== 0){
+                    var rate = copy._data[j][i] / copy._data[i][i];
+                    for (let k = 0; k < colCount; k++) {
+                      copy._data[j][k] -= rate * copy._data[i][k];
+                    }
+                  }
+              }
+          }
+        }
+        console.log('Row reduced echelon form:', copy);
+        return new Matrix(math.fraction(copy));
+      } catch (error) {
+          console.error('Error calculating the row reduced echelon form:', error);
+          throw new Error(error.message);
+      }
+    }
+
+    solve() {
+      try {
+          var copy = math.clone(this.matrix);
+          var rowCount = copy.size()[0];
+          var colCount = copy.size()[1]; // 增广矩阵的列数
+
+          for (let i = 0; i < rowCount; i++) { // 修复点1：使用rowCount
+            // 选主元
+            var max = 0;
+            var maxIndex = i;
+            for (let j = i; j < rowCount; j++) { // 修复点1：使用rowCount
+                if (Math.abs(copy._data[j][i]) > max) {
+                    max = Math.abs(copy._data[j][i]);
+                    maxIndex = j;
+                }
+            }
+            // 交换行
+            if (maxIndex !== i) {
+                [copy._data[i], copy._data[maxIndex]] = [copy._data[maxIndex], copy._data[i]];
+            }
+            var divisor = copy._data[i][i];
+            if (divisor !== 0) { // 避免除以0
+                for (let j = 0; j < colCount; j++) {
+                    copy._data[i][j] /= divisor;
+                }
+            }
+
+
+            for (let j = 0; j < rowCount; j++) { // 修复点1：使用rowCount
+                if (j !== i) {
+                    if (copy._data[i][i] !== 0){
+                      var rate = copy._data[j][i] / copy._data[i][i];
+                      for (let k = 0; k < colCount; k++) {
+                        copy._data[j][k] -= rate * copy._data[i][k];
+                      }
+                    }
+                }
+            }
+          }
+
+          // 解析RREF形式的矩阵以求解线性方程组
+          // 检查是否有解
+          for (let i = 0; i < rowCount; i++) {
+            let allZeroes = true;
+            for (let j = 0; j < colCount - 1; j++) { // 忽略最后一列（增广列）
+                if (copy._data[i][j] !== 0) {
+                    allZeroes = false;
+                    break;
+                }
+            }
+            if (allZeroes && copy._data[i][colCount - 1] !== 0) {
+                // 如果一行除了最后一列全为0，且最后一列不为0，则系统无解
+                throw new Error("System has no solution.");
+            }
+        }
+
+        // 解析RREF形式的矩阵以求解线性方程组
+        var solution = [];
+        for (let i = 0; i < colCount - 1; i++) { // 仅对未知数进行迭代
+            // 这里假设方程组有唯一解，并且每个未知数至少对应一行
+            if (i < rowCount) {
+                solution.push(copy._data[i][colCount - 1]); // 将增广列的值作为解
+            } else {
+                // 如果未知数多于行数（即方程数），可能需要额外的逻辑来处理这种情况
+                solution.push(0); // 或其他适当的默认值/逻辑
+            }
+        }
+
+        console.log('Solution:', solution);
+        solution = solution.map(element => elementToTex(math.fraction(element)));
+
+        return solution;
+      } catch (error) {
+          console.error('Error solving the linear equation system:', error);
+          throw new Error(error.message);
+      }
+    }
+
+
   
     inverse() {
       try {
@@ -270,6 +535,7 @@ class Matrix {
   
     add(other) {
       try {
+        console.log('This:', this.matrix, other.matrix);
         const sum = math.add(this.matrix, other.matrix);
         return new Matrix(math.fraction(sum));
       } catch (error) {
@@ -290,50 +556,3 @@ class Matrix {
 }
 
 window.Matrix = Matrix;
-
-const matrixSize = 3;
-
-// Usage
-const matrix1 = generateMatrix(matrixSize);
-const matrix2 = generateMatrix(matrixSize);
-
-const m1 = new Matrix(matrix1);
-const m2 = new Matrix(matrix2);
-
-const sumMatrix = m1.add(m2);
-sumMatrix.printMatrix();
-
-const productMatrix = m1.multiply(m2);
-productMatrix.printMatrix();
-
-const inverseMatrix = m1.inverse();
-if (inverseMatrix) {
-  inverseMatrix.printMatrix();
-}
-
-const luDecomp = m1.luDecomposition();
-if (luDecomp) {
-  luDecomp.L.printMatrix();
-  luDecomp.U.printMatrix();
-}
-
-const choleskyDecomp = m1.choleskyDecomposition();
-if (choleskyDecomp) {
-  choleskyDecomp.printMatrix();
-}
-
-// Example usage:
-try {
-    const latexStr = `
-        \\begin{bmatrix}
-            1 & 2 & 3 \\\\
-            4 & 5 & 6 \\\\
-            7 & 8 & 9
-        \\end{bmatrix}
-    `;
-
-    const matrixFromLatex = Matrix.parseFromLatex(latexStr);
-    console.log(matrixFromLatex); // Output the Matrix object
-} catch (e) {
-    console.error(e.message);
-}
