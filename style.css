@@ -11,13 +11,24 @@ body, html {
     padding: 0;
 }
 .sidebar {
-    min-height: 100%;
     border-right: 1px solid #ddd;
     padding: 0;
     overflow-y: auto; /* 侧边栏内部滚动 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 使内容靠上和靠下分布 */
+    height: 90%; /* 确保sidebar填满整个父容器的高度 */
 }
 .active {
     background-color: #ddd; /* 选中的背景颜色 */
+    margin: 0 5px;
+    border-radius: 5px;
+}
+.nav-item {
+    flex-grow: 1;
+}
+.nav-link:hover {
+    background-color: #fff; /* 鼠标悬停的背景颜色 */
     margin: 0 5px;
     border-radius: 5px;
 }
@@ -111,4 +122,45 @@ body, html {
     overflow-x: auto; /* 当内容溢出时在x轴方向（水平方向）显示滚动条 */
     max-width: 100%; /* 限制最大宽度，确保div不会超出其容器的宽度 */
     white-space: nowrap; /* 防止内部的文本或其他元素换行，确保了如果内容超出了当前宽度，就会显示滚动条 */
+}
+
+.github-corner {
+    background: transparent;
+}
+
+.github-corner {
+    border-bottom: 1px solid #999;
+    color: #fff;
+    cursor: pointer;
+    outline: 0;
+    text-decoration: none;
+    overflow-wrap: break-word;
+}
+
+.github-corner svg {
+    color: #fff;
+    fill: #000;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 2000;
+}
+
+svg {
+    width: 80;
+    height: 80;
+}
+
+svg:not(:root) {
+    overflow-clip-margin: content-box;
+    overflow: hidden;
+}
+
+#github-link {
+    text-align: center; /* 居中链接文本 */
+    margin-bottom: 20px; /* 在底部留出一些空间 */
+}
+
+#github-link a {
+    text-align: center;
 }
