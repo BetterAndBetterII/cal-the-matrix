@@ -141,6 +141,24 @@ class Matrix {
       }
     }
 
+    isSquareMatrix() {
+      const matrix = this.matrix.toDemicalArray();
+      if (!Array.isArray(matrix) || matrix.length === 0) return false;
+      const length = matrix[0].length;
+      return matrix.every(row => Array.isArray(row) && row.length === length);
+    }
+
+    toDemicalArray() {
+      const arrayData = this.matrix.toArray();
+      console.log(arrayData)
+      for (let i = 0; i < arrayData.length; i++) {
+        for (let j = 0; j < arrayData[i].length; j++) {
+          arrayData[i][j] = arrayData[i][j].s * arrayData[i][j].n / arrayData[i][j].d;
+        }
+      }
+      return arrayData;
+    }
+
     static parseFromLatex(latexString) {
       const matrixEnvironments = ['matrix', 'bmatrix', 'pmatrix', 'vmatrix', 'Bmatrix'];
       let environmentFound = false;
@@ -200,6 +218,12 @@ class Matrix {
             const latexRows = rowStrings.join(' \\\\ ');
             return `\\begin{bmatrix} ${latexRows} \\end{bmatrix}`;
         }
+    }
+
+    getSimpleString() {
+      const rows = this.matrix.toArray();
+      const rowStrings = rows.map(row => row.join(' '));
+      return rowStrings.join('\n');
     }
 
     getAugmentedLatexString() {
@@ -510,8 +534,25 @@ class Matrix {
       }
     }
 
+    eigenvectors() {
+      // 将Matrix对象转换为二维数组以便于计算
+      const array = this.matrix.toArray();
+      const demical_array = new Matrix(this.matrix).toDemicalArray();
+      console.log('Decimal array:', demical_array);
+    
+      // 使用numeric.js库计算特征值和特征向量
+      const ev = numeric.eig(demical_array);
+    
+      // 特征值为ev.lambda.x，特征向量为列向量形式的ev.E.x
+      const eigenvalues = ev.lambda.x;
+      const eigenvectorArray = ev.E.x;
+    
+      // 转换特征向量格式，以匹配Matrix类的要求
+      const eigenvectors = new Matrix(math.fraction(eigenvectorArray));
+      // 返回特征值和特征向量的Matrix对象
+      return { eigenvalues, eigenvectors };
+    }
 
-  
     inverse() {
       try {
         const inv = math.inv(this.matrix);

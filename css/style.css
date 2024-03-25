@@ -164,3 +164,8 @@ svg:not(:root) {
 #github-link a {
     text-align: center;
 }
+
+.btn-group span{
+    margin: 0 20px 0 20px;
+}
+
