@@ -577,9 +577,9 @@ function renderMatrixMultiplication(matrix1, matrix2) {
         catch (e){
             console.log('矩阵乘法失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} \\times ${matrix2.getLatexString(number_type)} = \\text{矩阵乘法失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixSolve(matrix1) {
@@ -609,9 +609,9 @@ function renderMatrixSolve(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$${matrix1.getAugmentedLatexString()} = \\text{矩阵求解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixRREF(matrix1) {
@@ -632,9 +632,9 @@ function renderMatrixRREF(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$${matrix1.getAugmentedLatexString()} = \\text{矩阵求解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixSVD(matrix1) {
@@ -655,9 +655,9 @@ function renderMatrixSVD(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} = \\text{SVD分解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixQR(matrix1) {
@@ -678,9 +678,9 @@ function renderMatrixQR(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} = \\text{QR分解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixD(matrix1) {
@@ -705,9 +705,9 @@ function renderMatrixD(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = \\text{求解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixNorm(matrix1) {
@@ -733,9 +733,9 @@ function renderMatrixNorm(matrix1) {
         catch (e){
             console.log('矩阵求解失败:', e);
             latexString = `$$\\|${matrix1.getLatexString(number_type)}\\| = \\text{求解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixAdd(matrix1, matrix2) {
@@ -769,9 +769,9 @@ function renderMatrixAdd(matrix1, matrix2) {
         catch (e){
             console.log('矩阵加法失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} + ${matrix2.getLatexString(number_type)} = \\text{矩阵加法失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixMinus(matrix1, matrix2) {
@@ -805,9 +805,9 @@ function renderMatrixMinus(matrix1, matrix2) {
         catch (e){
             console.log('矩阵减法失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} - ${matrix2.getLatexString(number_type)} = \\text{矩阵减法失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixInverse(matrix1) {
@@ -827,9 +827,9 @@ function renderMatrixInverse(matrix1) {
         catch (e){
             console.log('矩阵求逆失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)}^{-1} = \\text{矩阵求逆失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixLU(matrix1) {
@@ -857,9 +857,9 @@ function renderMatrixLU(matrix1) {
         catch (e){
             console.log('LU分解失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} = \\text{LU分解失败${e}}$$`;
-            renderResult('', '', latexString)
         }
     }
+    renderResult('', '', latexString)
 }
 
 function renderMatrixCholesky(matrix1) {
@@ -881,9 +881,9 @@ function renderMatrixCholesky(matrix1) {
         catch (e){
             console.log('Cholesky分解失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} = \\text{Cholesky分解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function renderMatrixEigen(matrix1) {
@@ -905,9 +905,9 @@ function renderMatrixEigen(matrix1) {
         catch (e){
             console.log('特征值分解失败:', e);
             latexString = `$$${matrix1.getLatexString(number_type)} = \\text{特征值分解失败${e}}$$`;
-            renderResult('', '', latexString);
         }
     }
+    renderResult('', '', latexString);
 }
 
 function calculateMatrix() {
