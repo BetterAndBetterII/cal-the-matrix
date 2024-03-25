@@ -21,10 +21,11 @@ var number_type = 'fractional';
 async function show_warning(message, duration) {
     const warning = document.getElementById('warning');
     warning.innerHTML = message;
-    warning.style.display = 'block';
+    warning.style.visibility = 'visible';
+    // visibility: hidden
     if (duration) {
         setTimeout(() => {
-            warning.style.display = 'hide';
+            warning.style.visibility = 'hidden';
         }, duration);
     }
 }
@@ -32,12 +33,14 @@ async function show_warning(message, duration) {
 function show_loading() {
     const warning = document.getElementById('warning');
     warning.innerHTML = '正在计算...';
-    warning.style.display = 'block';
+    // warning.style.display = 'block';
+    warning.style.visibility = 'visible';
 }
 
 function hide_warning() {
     const warning = document.getElementById('warning');
-    warning.style.display = 'hide';
+    // warning.style.display = 'hide';
+    warning.style.visibility = 'hidden';
 }
 
 // ori -> matrix
