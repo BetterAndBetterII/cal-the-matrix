@@ -17,6 +17,14 @@ math.cholesky = function (matrix) {
   return cholesky;
 }
 
+function removeBracketsContent(str) {
+  // 使用正则表达式匹配中括号及其内部的内容（包含嵌套的情况）
+  // \[ 匹配左中括号
+  // [^\[\]]* 匹配不包含中括号的任意字符，*表示匹配0次或多次
+  // \] 匹配右中括号
+  return str.replace(/\[[^\[\]]*\]/g, '');
+}
+
 
 // Generate a random 50x50 matrix
 const generateMatrix = (size) => {
@@ -158,9 +166,12 @@ class Matrix {
   }
 
   static parseFromLatex(latexString) {
-    const matrixEnvironments = ['matrix', 'bmatrix', 'pmatrix', 'vmatrix', 'Bmatrix'];
+    const matrixEnvironments = ['matrix', 'bmatrix', 'pmatrix', 'vmatrix', 'Bmatrix', 'array'];
     let environmentFound = false;
     let matrixArray = [];
+
+    latexString = removeBracketsContent(latexString);
+
 
     matrixEnvironments.forEach(env => {
       const regex = new RegExp(`\\\\begin{${env}}(.*?)\\\\end{${env}}`, 'gs');
@@ -384,6 +395,30 @@ class Matrix {
       return { Q: Q_matrix, R: R_matrix };
     } catch (error) {
       console.error('Error calculating the QR decomposition:', error);
+      throw new Error(error.message);
+    }
+  }
+  rank() {
+    try {
+      const rref = this.rref().toDemicalArray();
+      console.log("RREF:", rref);
+      let r = 0;
+      for (let i = 0; i < rref.length; i++) {
+        let allZeroes = true;
+        for (let j = 0; j < rref[i].length; j++) {
+          if (rref[i][j] !== 0) {
+            allZeroes = false;
+            break;
+          }
+        }
+        if (!allZeroes) {
+          r++;
+        }
+      }
+      console.log('rank:', r);
+      return r;
+    } catch (error) {
+      console.error('Error calculating the rank:', error);
       throw new Error(error.message);
     }
   }

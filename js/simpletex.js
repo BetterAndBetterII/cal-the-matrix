@@ -108,6 +108,7 @@ function ocr(imageFile){
     const formData = new FormData();
     formData.append('uuid', uuid());
     formData.append('file', imageFile);
+    formData.append('use_v25', 'true');
     formData.append('rec_mode', 'auto');
     return new Promise((resolve, reject) => {
         axios.post(url(), formData)

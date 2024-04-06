@@ -133,7 +133,7 @@ function parseFromImage(imageFile, targetId) {
         }
         catch (e) {
             console.log('解析失败:', e);
-            show_warning('解析失败，请重试' + e.message);
+            show_warning('解析失败，请重试' + e);
             return;
         }
         hide_warning();
@@ -153,12 +153,13 @@ function parseFromArray(str, targetId) {
     console.log('parseFromArray:', str);
     // split by "," or " "
     try {
+        str = str.replace(/−/g, '-'); // replace − to -
         const array = parseStringToArray(str);
         var matrix = new Matrix(array);
     }
     catch (e) {
         console.log('解析失败:', e);
-        show_warning('解析失败：' + e.message);
+        show_warning('解析失败：' + e);
         return;
     }
     console.log('parseFromArray:', matrix);
@@ -298,6 +299,14 @@ function d_init() {
     calculateMatrix();
 }
 
+function determinant_init() {
+    document.getElementById('function-title').innerText = '行列式';
+    document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
+    document.getElementById('matrix1-container').style.display = 'block';
+    document.getElementById('matrix2-container').style.display = 'none';
+    calculateMatrix();
+}
+
 function norm_init() {
     document.getElementById('function-title').innerText = '矩阵范数';
     document.getElementById('function-detail').innerText = '请粘贴图片或输入二维数组,自动识别矩阵并计算结果。双击图片可关闭。';
@@ -394,6 +403,10 @@ document.querySelectorAll('.nav-link').forEach(item => {
         else if (this.id == 'option13') {
             function_name = 'eigen';
             eigen_init();
+        }
+        else if (this.id == 'option14') {
+            function_name = 'determinant';
+            determinant_init();
         }
     });
 });
@@ -704,20 +717,48 @@ function renderMatrixD(matrix1) {
     }
     else {
         try {
-            result = matrix1.determinant();
+            result = matrix1.rank();
             // result is a list of numbers
             console.log('result_matrix:', result);
             if (number_type == 'fractional') {
-                latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = ${math.fraction(result)}$$`;
+                latexString = `$$\\text{rank}(${matrix1.getLatexString(number_type)}) = ${math.fraction(result)}$$`;
             } else {
-                latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = ${result}$$`;
+                latexString = `$$\\text{rank}(${matrix1.getLatexString(number_type)}) = ${result}$$`;
             }
             renderResult(result, result, latexString);
             // latexString = `$$  ${result_str} $$`;
         }
         catch (e) {
             console.log('矩阵求解失败:', e);
-            latexString = `$$\\text{det}(${matrix1.getLatexString(number_type)}) = \\text{求解失败${e}}$$`;
+            latexString = `$$\\text{rank}(${matrix1.getLatexString(number_type)}) = \\text{求解失败${e}}$$`;
+            renderResult('', '', latexString);
+        }
+    }
+}
+
+function renderMatrixDeterminant(matrix1) {
+    var latexString = '';
+    if (!matrix1) {
+        console.log('矩阵1为空');
+        latexString = `$$\\text{矩阵1为空}$$`;
+        renderResult('', '', latexString);
+    }
+    else {
+        try {
+            result = matrix1.determinant();
+            // result is a list of numbers
+            console.log('result_matrix:', result);
+            if (number_type == 'fractional') {
+                latexString = `$$\\det(${matrix1.getLatexString(number_type)}) = ${math.fraction(result)}$$`;
+            } else {
+                latexString = `$$\\det(${matrix1.getLatexString(number_type)}) = ${result}$$`;
+            }
+            renderResult(result, result, latexString);
+            // latexString = `$$  ${result_str} $$`;
+        }
+        catch (e) {
+            console.log('矩阵求解失败:', e);
+            latexString = `$$\\det(${matrix1.getLatexString(number_type)}) = \\text{求解失败${e}}$$`;
             renderResult('', '', latexString);
         }
     }
@@ -1007,8 +1048,12 @@ function calculateMatrix() {
             console.log('矩阵1为空');
         }
         renderMatrixEigen(matrix1);
+    } else if (function_name == 'determinant') {
+        if (!matrix1) {
+            console.log('矩阵1为空');
+        }
+        renderMatrixDeterminant(matrix1);
     }
-
 }
 
 // 功能：双击图片则关闭图片
