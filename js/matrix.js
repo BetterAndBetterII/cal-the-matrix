@@ -198,12 +198,12 @@ class Matrix {
     });
 
     if (!environmentFound || matrixArray.length === 0) {
-      throw new Error('No valid LaTeX matrix environment found or matrix is empty.');
+      throw new Error('无效LaTex环境或内容为空');
     }
 
     const isWellFormed = matrixArray.every(row => row.length === matrixArray[0].length);
     if (!isWellFormed) {
-      throw new Error('The LaTeX matrix is not well-formed.');
+      throw new Error('矩阵排列不正确');
     }
     try {
       return new Matrix(math.fraction(matrixArray)); // Make sure you have a Matrix constructor or replace with appropriate handling

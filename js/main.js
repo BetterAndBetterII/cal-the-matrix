@@ -189,7 +189,7 @@ function parseStringToArray(str) {
         // 将分割后的字符串数组转换为数字数组
         var numberArray = elements.map(element => {
             let number = parseFloat(element);
-            if (isNaN(number)) throw '解析失败：包含非数字元素';
+            if (isNaN(number)) throw '包含非数字元素';
             return number;
         });
 
@@ -201,7 +201,7 @@ function parseStringToArray(str) {
     const columnCount = matrix[0].length;
     const isUniform = matrix.every(row => row.length === columnCount);
     if (!isUniform) {
-        throw '解析失败：矩阵行的列数不一致';
+        throw '矩阵行的列数不一致';
     }
 
     return matrix;
